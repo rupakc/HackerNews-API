@@ -4,13 +4,12 @@ Created on Wed Dec 23 21:54:57 2015
 Wrapper around the Hacker News API provided by algolia
 the base endpoint is -
 http://hn.algolia.com/api/v1/search?query=startup - For a given search query
-TODO - Add pagination for the search queries
+TODO - Add comments and handle error codes a bit
 @author: Rupak Chakraborty
 """
 import urllib2
 import json
 import socket
-import jsonpickle
 
 class HighlightResult:
     
@@ -51,6 +50,7 @@ class Post:
 class QueryResult: 
     
     link = "http://hn.algolia.com/api/v1/search?query=" 
+    linkTag = "http://hn.algolia.com/api/v1/search?tags="
     nbHits = ""
     page = ""
     nbPages = ""
@@ -59,16 +59,46 @@ class QueryResult:
     params = ""
     processingTimeMS = ""
     postList = []
+    tagName = ""
+    tagParam = "&tags="
+    searchbyTag = False
+    paginateFlag = False
+    pageParam = "&page="
+    paginateList = []
     
+    def setTagName(self,tag):
+        self.tagName = tag 
+        
+    def setPagination(self,pageFlag):
+        self.paginateFlag = pageFlag
+        
+    def setSearchByTagName(self,boolValue,tagName):
+        self.searchbyTag = boolValue
+        self.tagName = tagName
+        
     def __init__(self,userQuery): 
         
         self.userQuery = userQuery 
-        self.link = self.link + self.userQuery.strip()
+        self.userQuery = userQuery.replace(" ","%20")
+    
+    def linkGen(self): 
+        
+        if self.tagName != "":
+            self.link = self.link + self.userQuery.strip() + self.tagParam + self.tagName
+        elif self.searchbyTag:
+            self.link = self.linkTag + self.tagParam + self.tagName
+        else:
+            self.link = self.link + self.userQuery.strip()
+            
+        return self.link
         
     def getJSONResponse(self,link):        
         
         response = urllib2.urlopen(link,timeout=socket._GLOBAL_DEFAULT_TIMEOUT)
-        jsonData = json.loads(response.read()) 
+        if response.getcode() != 200:
+            jsonData = "failure"
+        else:
+            jsonData = json.loads(response.read()) 
         
         return jsonData
     
@@ -137,4 +167,31 @@ class QueryResult:
                     post.highlightResult = self.populateHighLightedResult(hit["_highlightResult"])
                     
                 self.postList.append(post)
+                
+        return self.postList
+        
+    def postProcessingPipeline(self):
+        
+        if self.paginateFlag: 
+            
+            link = self.linkGen()
+            originalLink = self.linkGen()
+            link = link + self.pageParam + str(0)
+            jsonResponse = self.getJSONResponse(link)
+            self.paginateList.append(self.populateJSONFields(jsonResponse)) 
+            self.page = self.page + 1 
+            
+            while self.page < self.nbPages:
+                
+                link = originalLink + self.pageParam + str(self.page)
+                print link
+                print str(self.page)
+                jsonResponse = self.getJSONResponse(link)
+                self.paginateList.append(self.populateJSONFields(jsonResponse))
+                self.page = self.page + 1
+        else:
+            
+            link = self.linkGen()
+            jsonResponse = self.getJSONResponse(link)
+            self.populateJSONFields(jsonResponse)
         
