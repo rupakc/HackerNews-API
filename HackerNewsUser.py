@@ -11,6 +11,9 @@ import urllib2
 import json
 import socket
 
+"""
+Defines the User class for fetching the user data from Hacker News
+"""
 class User:
     
     Id = ""
@@ -32,11 +35,17 @@ class User:
         self.userQuery = userQuery 
         self.link = self.link + self.userQuery.strip()
         
+    """
+    Given a url returns the response in JSON format
+    """
     def getJSONResponse(self,link):        
         response = urllib2.urlopen(link,timeout=socket._GLOBAL_DEFAULT_TIMEOUT)
         jsonData = json.loads(response.read())
         return jsonData
-    
+        
+    """
+    Populates the user fields from a given response
+    """
     def populateUserFields(self,jsonData):
         
         self.Id = jsonData["id"]
@@ -52,28 +61,11 @@ class User:
         self.delay = jsonData["delay"]
         self.updated_at = jsonData["updated_at"]
         self.objectId = jsonData["objectID"]
-    
+        
+    """
+    Defines the user processing pipeline for extracting user data
+    """
     def userProcessingPipeline(self):
         
         jsonResponse = self.getJSONResponse(self.link)
         self.populateUserFields(jsonResponse)
-
-def sample():
-    
-    user = User("pg")
-    user.userProcessingPipeline()
-    print "User Id : ",user.Id
-    print "Creation Time : ", user.created_at_i
-    print "Submission Count : ", user.submission_count
-    print "Username : ", user.username
-    print "Submitted : ", user.submitted
-    print "About : ", user.about
-    print "Karma : ", user.karma
-    print "Comment Count : ", user.comment_count
-    print "Created At : ", user.created_at
-    print "Avg Rating : ", user.avg
-    print "Delay : ", user.delay
-    print "Updated At : ", user.updated_at
-    print "Object ID : ", user.objectId
-
-sample()

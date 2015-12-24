@@ -4,13 +4,15 @@ Created on Wed Dec 23 21:54:57 2015
 Wrapper around the Hacker News API provided by algolia
 the base endpoint is -
 http://hn.algolia.com/api/v1/search?query=startup - For a given search query
-TODO - Add comments and handle error codes a bit
 @author: Rupak Chakraborty
 """
 import urllib2
 import json
 import socket
 
+"""
+Defines the class for the Highlighted Result field of the response
+"""
 class HighlightResult:
     
     def __init__(self):
@@ -18,14 +20,18 @@ class HighlightResult:
         self.url = ""
         self.author = ""
         self.story_text = "" 
-        
+"""
+Defines the value stored in the highlighted result field
+"""
 class HighlightResultValue:
     
     def __init__(self):
         self.value = ""
         self.matchLevel = ""
         self.matchedWords = [] 
-        
+"""
+Defines the Post class containing the relevant information of a given post
+"""
 class Post:
     
     created_at = ""
@@ -46,7 +52,9 @@ class Post:
     
     def __init__(self):
         self.highlightResult = HighlightResult()
-        
+"""
+Main class to query the HackerNews API and parse the response
+"""
 class QueryResult: 
     
     link = "http://hn.algolia.com/api/v1/search?query=" 
@@ -66,12 +74,19 @@ class QueryResult:
     pageParam = "&page="
     paginateList = []
     
+    """
+    Sets the tag name for a given endpoint
+    """
     def setTagName(self,tag):
         self.tagName = tag 
-        
+    """
+    Sets the pagination flag for a given query
+    """
     def setPagination(self,pageFlag):
         self.paginateFlag = pageFlag
-        
+    """
+    Uses the tag endpoint to search
+    """
     def setSearchByTagName(self,boolValue,tagName):
         self.searchbyTag = boolValue
         self.tagName = tagName
@@ -80,7 +95,10 @@ class QueryResult:
         
         self.userQuery = userQuery 
         self.userQuery = userQuery.replace(" ","%20")
-    
+        
+    """
+    Generates specific urls for the required endpoints
+    """
     def linkGen(self): 
         
         if self.tagName != "":
@@ -92,6 +110,9 @@ class QueryResult:
             
         return self.link
         
+    """
+    Given a URL returns the JSON response of it
+    """
     def getJSONResponse(self,link):        
         
         response = urllib2.urlopen(link,timeout=socket._GLOBAL_DEFAULT_TIMEOUT)
@@ -101,7 +122,9 @@ class QueryResult:
             jsonData = json.loads(response.read()) 
         
         return jsonData
-    
+    """
+    Populates the values in a highlighted JSON field
+    """
     def populateHighLightedResultValue(self,result):
         
         high = HighlightResultValue()
@@ -115,6 +138,9 @@ class QueryResult:
         
         return high
         
+    """
+    Function to parse the highlighted fields of a given response
+    """
     def populateHighLightedResult(self,highlightedResult):
         
         highlight = HighlightResult()
@@ -129,7 +155,10 @@ class QueryResult:
              highlight.story_text = self.populateHighLightedResultValue(highlightedResult["story_text"]) 
              
         return highlight;
-             
+        
+    """
+    Populates the JSON fields of a given JSON response
+    """       
     def populateJSONFields(self,jsonData):
         
         self.nbHits = jsonData["nbHits"]
@@ -170,6 +199,9 @@ class QueryResult:
                 
         return self.postList
         
+    """
+    Defines the processing pipeline for the entire post
+    """    
     def postProcessingPipeline(self):
         
         if self.paginateFlag: 
